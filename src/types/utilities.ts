@@ -1,0 +1,16 @@
+export const toolsOptions = [
+  { id: 1, name: "Bucket" },
+  { id: 2, name: "Chipping hammer" },
+  { id: 3, name: "Circular saw" },
+  { id: 4, name: "Container" },
+  { id: 5, name: "Fan" },
+  { id: 6, name: "Floor scraper" },
+  { id: 7, name: "Floor scraper machine" },
+  { id: 8, name: "Generator" },
+  { id: 9, name: "Negative" },
+  { id: 10, name: "Partner saw" },
+  { id: 11, name: "Sawzall" },
+  { id: 12, name: "Scalfolding" },
+  { id: 13, name: "Shoring post" },
+  { id: 14, name: "Other" },
+];
