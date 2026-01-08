@@ -55,7 +55,7 @@ function List({}: Props) {
     setShowModalEquipment(true);
   };
 
-  const handleAddRental = (equipmentId: string) => {
+  const handleAddRental = () => {
     // const equipSelected = equipments?.find(
     //   (equipment) => equipment.number === equipmentId
     // );
@@ -139,7 +139,7 @@ function List({}: Props) {
               <Button
                 style={{ marginTop: "4px" }}
                 variant="outline-primary"
-                onClick={() => handleAddRental("E00")}
+                onClick={() => handleAddRental()}
               >
                 <strong>Rented Equipment</strong>
               </Button>

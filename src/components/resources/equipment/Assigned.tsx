@@ -86,7 +86,7 @@ function Assigned({}: Props) {
   );
 
   const equipmentTabTitle = `HM Brandt ( E: ${counts.E} - A: ${counts.A} )`;
-  console.log("Assigned Equipments Rendered",assignedRentals);
+  // console.log("Assigned Equipments Rendered",assignedRentals);
 
   return (
     <>

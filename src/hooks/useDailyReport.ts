@@ -5,7 +5,7 @@ import { DailyReport, DrTotals } from "../types";
 const queryDailyReport = async (
   dailyReportId: number
 ): Promise<DailyReport> => {
-  const { data } = await api.get(`/dailyReport/dto/${dailyReportId}`);
+  const { data } = await api.get(`v1/dailyReport/dto/${dailyReportId}`);
   return data;
 };
 
@@ -23,7 +23,7 @@ const queryDrTotals = async (
   date: string
 ): Promise<DrTotals> => {
   const { data } = await api.get(
-    `/dailyReport/totals/${jobNumber}/by-date?date=${date}`
+    `v1/dailyReport/totals/${jobNumber}/by-date?date=${date}`
   );
   return data;
 };
@@ -33,7 +33,8 @@ export function useDrTotals(jobNumber: string, date: string) {
     queryKey: ["drTotals", jobNumber, date],
     queryFn: () => queryDrTotals(jobNumber, date),
     enabled: !!jobNumber && !!date,
-    retry: false,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 }
 
@@ -45,9 +46,9 @@ const createDailyReport = async ({
   jobId: number;
 }) => {
   if (reportData.dailyReportId) {
-    return api.put(`/dailyReport`, reportData);
+    return api.put(`v1/dailyReport`, reportData);
   }
-  return api.post(`/dailyReport/${jobId}`, reportData);
+  return api.post(`v1/dailyReport/${jobId}`, reportData);
 };
 
 export function useSaveDailyReport() {

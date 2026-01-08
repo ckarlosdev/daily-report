@@ -5,7 +5,7 @@ import GralTools from "../tools/GralTools";
 import Events from "../Events";
 import Description from "../Description";
 import General from "../General";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import dailyReportStore from "../../stores/dailyReportStore";
 import { useEffect, useRef } from "react";
 import useManpowerStore from "../../stores/useManpowerStore";
@@ -47,7 +47,7 @@ function Home() {
     assignedEquipments,
     reset: resetEquipment,
   } = useEquipmentStore();
-  
+
   const { setFullToolData, assignedTools, reset: resetTools } = useToolStore();
   const {
     setFullRentalData,
@@ -63,10 +63,18 @@ function Home() {
   useEffect(() => {
     const jobId = searchParams.get("jobId");
     const dailyReportId = searchParams.get("dailyReportId");
+    console.log("Setting IDs from URL params:", {
+      jobId,
+      dailyReportId,
+    });
     if (jobId || dailyReportId) {
-      setIds(Number(jobId), Number(dailyReportId));
+      const jId = Number(jobId);
+      const dId = Number(dailyReportId);
+      if (!isNaN(jId) || !isNaN(dId)) {
+        setIds(jId, dId);
+      }
     }
-  }, [useParams, setIds]);
+  }, [searchParams, setIds]);
 
   useEffect(() => {
     if (report && !isLoaded) {
@@ -178,7 +186,10 @@ function Home() {
                   fontSize: "25px",
                   marginRight: "20px",
                 }}
-                onClick={() => handleReset()}
+                onClick={() => {
+                  handleReset();
+                  window.location.href = `https://ckarlosdev.github.io/binder-webapp/#/binder/${jobId}`;
+                }}
                 variant="outline-primary"
                 className="no-print"
               >

@@ -143,3 +143,9 @@ export type DrTotals = {
   days: number;
   hours: string;
 };
+
+export type User = {
+  id: number;
+  fullName: string;
+  email: string;
+};

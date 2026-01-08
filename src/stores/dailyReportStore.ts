@@ -40,7 +40,7 @@ const initialData: DailyReport = {
   dailyReportId: null,
   date: getTodayDate(),
   foreman: "",
-  userName: "test UI ckarlos",
+  userName: "No User",
   description: "",
   manOther: "",
   equipmentOther: "",

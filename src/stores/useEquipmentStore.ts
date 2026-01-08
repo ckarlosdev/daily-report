@@ -39,7 +39,7 @@ const useEquipmentStore = create<EquipmentStore>()(
       attachmentsSelected: {} as Attachment,
       showModalEquipment: false,
       showModalRental: false,
-      showModalOdometer: true,
+      showModalOdometer: false,
       hourModal: 0,
       operadorId: 51,
       updateAssigned: false,
