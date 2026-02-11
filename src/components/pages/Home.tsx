@@ -18,14 +18,17 @@ import { DRRental, DRTool } from "../../types";
 import { useDailyReport, useSaveDailyReport } from "../../hooks/useDailyReport";
 import { useReactToPrint } from "react-to-print";
 import "../../styles/buttons.css";
+import useUser from "../../hooks/useUser";
 
 function Home() {
   const [searchParams] = useSearchParams();
   const setIds = useContextStore((s) => s.setIds);
   const { dailyReportId, jobId, isLoaded, setIsLoaded } = useContextStore();
 
+  const { data: userData } = useUser();
+
   const { data: report, isLoading } = useDailyReport(
-    dailyReportId ? Number(dailyReportId) : 0
+    dailyReportId ? Number(dailyReportId) : 0,
   );
 
   const { mutate, isPending: isSaving } = useSaveDailyReport();
@@ -100,8 +103,11 @@ function Home() {
   }, [report]);
 
   const handleSave = () => {
+    // console.log("User Data:", userData);
+
     const updatedReport = {
       ...dailyReportData, // Lo que ya teníamos (fecha, foreman, etc.)
+      userName: userData?.email,
       employees: assignedEmployees,
       equipments: assignedEquipments,
       rentals: assignedRentals,
@@ -109,9 +115,10 @@ function Home() {
       dumpsters: assignedDumpsters, // Asegúrate de que aquí ya venga mapeado si es necesario
     };
 
+    // console.log("Updated Report to Save:", updatedReport);
     setFullDailyReportData(updatedReport);
 
-    console.log("Saving daily report:", updatedReport, "for jobId:", jobId);
+    // console.log("Saving daily report:", updatedReport, "for jobId:", jobId);
     mutate({
       reportData: updatedReport!,
       jobId: jobId!,
@@ -129,10 +136,8 @@ function Home() {
     setIds(null, null);
   };
 
-  // 1. Creamos la referencia que apuntará a este mismo componente (o a un div interno)
   const componenteRef = useRef(null);
 
-  // 2. Definimos la lógica de impresión
   const handlePrint = useReactToPrint({
     contentRef: componenteRef,
     documentTitle: "DR",

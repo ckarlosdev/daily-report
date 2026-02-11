@@ -67,8 +67,8 @@ function Totals({}: Props) {
                   type="text"
                   id="inputTotalDays"
                   readOnly
-                  value={`${drTotals?.days} day(s) + today (1) Total: ${
-                    drTotals?.days ? Number(drTotals?.days) + 1 : 1
+                  value={`${drTotals?.days ? drTotals?.days : 0} day(s) + today (1) Total: ${
+                    drTotals?.days ? Number(drTotals ? drTotals?.days : 0) + 1 : 1
                   } days`}
                   style={{
                     fontWeight: "bold",

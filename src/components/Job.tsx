@@ -2,17 +2,15 @@ import { Card, Col, FloatingLabel, Form, Row } from "react-bootstrap";
 import useJob from "../hooks/useJob";
 import { useContextStore } from "../stores/useContextStore";
 
-type Props = {
-};
+type Props = {};
 
-function Job({  }: Props) {
-  const {jobId} = useContextStore();
-  const { data: job, isLoading, isError } = useJob(
-    jobId ? Number(jobId) : 0
-  );
+function Job({}: Props) {
+  const { jobId } = useContextStore();
+  const { data: job, isLoading, isError } = useJob(jobId ? Number(jobId) : 0);
 
   if (isLoading) return <div>Loading Job data {jobId}...</div>;
   if (isError) return <div>Error loading Job data.</div>;
+  // console.log(jobId);
 
   return (
     <>

@@ -52,15 +52,6 @@ export type Attachment = {
   serialNumber: string;
 };
 
-export type Attachments = {
-  // pending
-};
-
-export type Photos = {};
-
-export type Tools = {};
-
-export type Dumpsters = {};
 
 export type Job = {
   jobsId: number | null;

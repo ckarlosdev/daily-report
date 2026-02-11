@@ -1,9 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "./apiConfig";
 import { DailyReport, DrTotals } from "../types";
+import useDailyReportStore from "../stores/dailyReportStore";
 
 const queryDailyReport = async (
-  dailyReportId: number
+  dailyReportId: number,
 ): Promise<DailyReport> => {
   const { data } = await api.get(`v1/dailyReport/dto/${dailyReportId}`);
   return data;
@@ -20,10 +21,10 @@ export function useDailyReport(dailyReportId: number) {
 
 const queryDrTotals = async (
   jobNumber: string,
-  date: string
+  date: string,
 ): Promise<DrTotals> => {
   const { data } = await api.get(
-    `v1/dailyReport/totals/${jobNumber}/by-date?date=${date}`
+    `v1/dailyReport/totals/${jobNumber}/by-date?date=${date}`,
   );
   return data;
 };
@@ -53,16 +54,20 @@ const createDailyReport = async ({
 
 export function useSaveDailyReport() {
   const queryClient = useQueryClient();
+  const setDailyReportData = useDailyReportStore(
+    (state) => state.setDailyReportData,
+  );
+
   return useMutation({
     mutationFn: createDailyReport,
     onSuccess: (response) => {
       const newId = response.data.dailyReportId;
+      setDailyReportData("dailyReportId", newId);
       queryClient.invalidateQueries({ queryKey: ["dailyReport", newId] });
-      // queryClient.invalidateQueries({ queryKey: ["dailyReports"] }); es para el listado de dailyreports
-      alert("Reporte guardado con éxito");
+      alert("Data saved.");
     },
     onError: () => {
-      alert("Error al guardar el reporte diario");
+      alert("Error saving data.");
     },
   });
 }

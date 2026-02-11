@@ -33,8 +33,8 @@ const LogoutButton = () => {
         error
       );
     } finally {
-      logout();
       handleReset();
+      logout();
       window.location.href = "https://ckarlosdev.github.io/login/";
     }
   };

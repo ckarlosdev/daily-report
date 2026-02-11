@@ -13,7 +13,7 @@ type dailyReportStore = {
   dailyReportData: DailyReport;
   setDailyReportData: <K extends keyof DailyReport>(
     key: K,
-    value: DailyReport[K]
+    value: DailyReport[K],
   ) => void;
   setForeman: (foreman: string) => void;
   setFullDailyReportData: (data: DailyReport) => void;
@@ -22,7 +22,7 @@ type dailyReportStore = {
     equipments: DREquipment[],
     rentals: DRRental[],
     tools: DRTool[],
-    dumpsters: DrDumpster[]
+    dumpsters: DrDumpster[],
   ) => void;
   reset: () => void;
 };
@@ -79,7 +79,7 @@ const useDailyReportStore = create<dailyReportStore>()(
         equipments,
         rentals,
         tools,
-        dumpsters
+        dumpsters,
       ) =>
         set((state) => ({
           dailyReportData: {
@@ -96,8 +96,8 @@ const useDailyReportStore = create<dailyReportStore>()(
     }),
     {
       name: "daily-report-storage",
-    }
-  )
+    },
+  ),
 );
 
 export default useDailyReportStore;
