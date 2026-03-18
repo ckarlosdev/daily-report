@@ -19,11 +19,13 @@ import { useDailyReport, useSaveDailyReport } from "../../hooks/useDailyReport";
 import { useReactToPrint } from "react-to-print";
 import "../../styles/buttons.css";
 import useUser from "../../hooks/useUser";
+import { useAuthStore } from "../../hooks/authStore";
 
 function Home() {
   const [searchParams] = useSearchParams();
   const setIds = useContextStore((s) => s.setIds);
   const { dailyReportId, jobId, isLoaded, setIsLoaded } = useContextStore();
+  const { user: userAuth } = useAuthStore();
 
   const { data: userData } = useUser();
 
@@ -64,20 +66,33 @@ function Home() {
   } = useDumpsterStore();
 
   useEffect(() => {
-    const jobId = searchParams.get("jobId");
-    const dailyReportId = searchParams.get("dailyReportId");
-    console.log("Setting IDs from URL params:", {
-      jobId,
-      dailyReportId,
-    });
-    if (jobId || dailyReportId) {
-      const jId = Number(jobId);
-      const dId = Number(dailyReportId);
+    const jobIdParam = searchParams.get("jobId");
+    const dailyReportIdParam = searchParams.get("dailyReportId");
+    const isNewAction = searchParams.get("action") === "new";
+    // console.log("Setting IDs from URL params:", {
+    //   jobId: jobIdParam,
+    //   dailyReportId: dailyReportIdParam,
+    //   isNewAction,
+    // });
+
+    const isDifferentJob = jobId && Number(jobIdParam) !== jobId;
+
+    if (isNewAction || (jobIdParam && isDifferentJob && !dailyReportIdParam)) {
+      handleReset();
+    }
+
+    if (jobIdParam || dailyReportIdParam) {
+      const jId = Number(jobIdParam);
+      const dId = Number(dailyReportIdParam);
+
       if (!isNaN(jId) || !isNaN(dId)) {
+        if (dId !== dailyReportId) {
+          setIsLoaded(false); // <--- ESTO ES CLAVE
+        }
         setIds(jId, dId);
       }
     }
-  }, [searchParams, setIds]);
+  }, []);
 
   useEffect(() => {
     if (report && !isLoaded) {
@@ -103,7 +118,7 @@ function Home() {
   }, [report]);
 
   const handleSave = () => {
-    // console.log("User Data:", userData);
+    if (!validateForeman) return;
 
     const updatedReport = {
       ...dailyReportData, // Lo que ya teníamos (fecha, foreman, etc.)
@@ -125,6 +140,14 @@ function Home() {
     });
   };
 
+  const validateForeman = () => {
+    if (dailyReportData.foreman === "") {
+      alert("Please select foreman.");
+      return false;
+    }
+    return true;
+  };
+
   const handleReset = () => {
     resetDailyReport();
     resetManpower();
@@ -143,7 +166,12 @@ function Home() {
     documentTitle: "DR",
   });
 
-  if (isLoading) return <p>Cargando datos del reporte...</p>;
+  if (isLoading) return <p>Loading report data...</p>;
+
+  const isAuthorized = userAuth?.roles?.some(
+    (role) =>
+      role.name === "ROLE_SUPERVISOR" || role.name === "ROLE_SUPERINTENDENT",
+  );
 
   return (
     <>
@@ -212,7 +240,7 @@ function Home() {
                 onClick={() => {
                   handleSave();
                 }}
-                disabled={isSaving}
+                disabled={isSaving || !isAuthorized}
                 className="no-print"
               >
                 {isSaving ? (

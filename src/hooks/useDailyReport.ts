@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "./apiConfig";
 import { DailyReport, DrTotals } from "../types";
-import useDailyReportStore from "../stores/dailyReportStore";
+import { useContextStore } from "../stores/useContextStore";
 
 const queryDailyReport = async (
   dailyReportId: number,
@@ -54,17 +54,20 @@ const createDailyReport = async ({
 
 export function useSaveDailyReport() {
   const queryClient = useQueryClient();
-  const setDailyReportData = useDailyReportStore(
-    (state) => state.setDailyReportData,
-  );
+  // const setDailyReportData = useDailyReportStore(
+  //   (state) => state.setDailyReportData,
+  // );
+  const jobId = useContextStore((s) => s.jobId);
+  
 
   return useMutation({
     mutationFn: createDailyReport,
     onSuccess: (response) => {
       const newId = response.data.dailyReportId;
-      setDailyReportData("dailyReportId", newId);
+      // setDailyReportData("dailyReportId", newId);
       queryClient.invalidateQueries({ queryKey: ["dailyReport", newId] });
       alert("Data saved.");
+      window.location.href = `https://ckarlosdev.github.io/binder-webapp/#/binder/${jobId}`;
     },
     onError: () => {
       alert("Error saving data.");

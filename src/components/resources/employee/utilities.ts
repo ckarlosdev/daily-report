@@ -1,7 +1,7 @@
 export const calculateHoursDifference = (
   inHour: string,
   outHour: string,
-  lunch: boolean
+  lunch: boolean,
 ) => {
   // 1. Convertir HH:MM a minutos totales desde la medianoche (00:00)
   const timeToMinutes = (timeString: string) => {
@@ -18,6 +18,6 @@ export const calculateHoursDifference = (
 
   // 3. Convertir la diferencia de minutos a horas decimales
   const differenceInHours = differenceInMinutes / 60;
-  const roundedHours = Math.round(differenceInHours * 10) / 10;
+  const roundedHours = Math.round(differenceInHours * 100) / 100;
   return roundedHours;
 };

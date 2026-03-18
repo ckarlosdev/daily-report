@@ -33,7 +33,7 @@ function ModalEquipment({}: Props) {
   const employeesFiltered = employees?.filter(
     (emp) =>
       emp.status === "Active" &&
-      (emp.title === "Labor" || emp.title === "Supervisor")
+      (emp.title === "Labor" || emp.title === "Supervisor"),
   );
 
   const employeesSorted = employeesFiltered?.sort((a, b) => {
@@ -127,9 +127,20 @@ function ModalEquipment({}: Props) {
                 <Form.Control
                   style={{ fontWeight: "bold", textAlign: "center" }}
                   type="number"
-                  min={0}
                   value={hourModal}
-                  onChange={(e) => setHourModal(Number(e.target.value))}
+                  onChange={(e) => {
+                    const value = e.target.value;
+
+                    if (value === "") {
+                      setHourModal("");
+                    } else {
+                      const normalizedValue = value.replace(/^0+/, "") || value;
+                      setHourModal(Number(normalizedValue));
+                    }
+                  }}
+                  onBlur={() => {
+                    if (hourModal === "") setHourModal(0);
+                  }}
                 />
               </Col>
             </Row>

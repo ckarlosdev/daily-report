@@ -51,6 +51,7 @@ function Assigned({ handleShowModal }: Props) {
           <Col>
             <div>
               <h3>Assigned</h3>
+              {/* <Add></Add> */}
             </div>
           </Col>
         </Row>
@@ -101,8 +102,8 @@ function Assigned({ handleShowModal }: Props) {
                         </Button>
                       </td>
                       <td>{handleGetName(assignment.employeesId!)}</td>
-                      <td>{assignment.inHour}</td>
-                      <td>{assignment.outHour}</td>
+                      <td>{assignment.inHour?.slice(0, 5)}</td>
+                      <td>{assignment.outHour?.slice(0, 5)}</td>
                       <td>
                         {calculateHoursDifference(
                           assignment.inHour,

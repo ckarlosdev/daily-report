@@ -33,39 +33,46 @@ function CardManpower({}: Props) {
 
       return totals;
     },
-    { qty: 0, totalHours: 0 }
+    { qty: 0, totalHours: 0 },
   );
 
-  const manpowerRoleCounts = assignedEmployees.reduce((totals, employee) => {
-    const empData = employees?.find(
-      (emp) => emp.employeesId === employee.employeesId
-    );
-    if (!empData) return totals;
+  const manpowerRoleCounts = assignedEmployees.reduce(
+    (totals, employee) => {
+      const empData = employees?.find(
+        (emp) => emp.employeesId === employee.employeesId,
+      );
+      if (!empData) return totals;
 
-    const role = empData.title;
-    const inHour = employee.inHour;
-    const outHour = employee.outHour;
+      const role = empData.title;
+      const inHour = employee.inHour.slice(0, 5);
+      const outHour = employee.outHour.slice(0, 5);
 
-    const uniqueKey = `${role}-${inHour}-${outHour}`;
+      const uniqueKey = `${role}-${inHour}-${outHour}`;
 
-    if (!totals[uniqueKey]) {
-      const inDecimal = timeToDecimalHours(inHour);
-      const outDecimal = timeToDecimalHours(outHour);
-      const totalHours = Math.max(0, outDecimal - inDecimal);
+      if (!totals[uniqueKey]) {
+        const inDecimal = timeToDecimalHours(inHour);
+        const outDecimal = timeToDecimalHours(outHour);
+        const rawTotal = outDecimal - inDecimal;
+        const totalHours = Math.round(Math.max(0, rawTotal) * 100) / 100;
 
-      totals[uniqueKey] = {
-        qty: 0,
-        title: role,
-        in: inHour,
-        out: outHour,
-        total: totalHours,
-      };
-    }
+        totals[uniqueKey] = {
+          qty: 0,
+          title: role,
+          in: inHour,
+          out: outHour,
+          total: totalHours,
+        };
+      }
 
-    totals[uniqueKey].qty += 1;
+      totals[uniqueKey].qty += 1;
 
-    return totals;
-  }, {} as Record<string, { qty: number; title: string; in: string; out: string; total: number }>);
+      return totals;
+    },
+    {} as Record<
+      string,
+      { qty: number; title: string; in: string; out: string; total: number }
+    >,
+  );
 
   return (
     <div>
@@ -107,7 +114,7 @@ function CardManpower({}: Props) {
                         <td>{item.title}</td>
                         <td>{item.in}</td>
                         <td>{item.out}</td>
-                        <td>{item.total.toFixed(1)}</td>
+                        <td>{(item.total * item.qty).toFixed(2)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -144,7 +151,7 @@ function CardManpower({}: Props) {
                       type="text"
                       readOnly
                       id="inputManpowerHours"
-                      value={manpowerTotals.totalHours.toFixed(1) ?? "0.0"}
+                      value={manpowerTotals.totalHours.toFixed(2) ?? "0.00"}
                       style={{ fontWeight: "bold", textAlign: "center" }}
                     />
                   </Col>

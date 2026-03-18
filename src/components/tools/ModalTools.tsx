@@ -34,16 +34,32 @@ function ModalTools({}: Props) {
   const handleInputChange = (
     event: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    >,
   ) => {
     const { id, value, type } = event.target;
-    const newValue: string | number = type === "number" ? Number(value) : value;
+
+    let newValue: string | number | "";
+
+    if (type === "number") {
+      if (value === "") {
+        // input vacío mientras el usuario borra
+        newValue = "";
+      } else {
+        // eliminar ceros a la izquierda
+        const normalized = value.replace(/^0+/, "") || "0"; // si solo escribió 0, queda "0"
+        newValue = Number(normalized);
+      }
+    } else {
+      newValue = value;
+    }
+
     setModalData(id as keyof DRTool, newValue as any);
   };
 
   const validateModalData = (): boolean => {
     return (
       modalData.name.trim() !== "" &&
+      modalData.qty != "" &&
       modalData.qty > 0 &&
       (modalData.name !== "Other" || modalData.other.trim() !== "")
     );
@@ -61,7 +77,7 @@ function ModalTools({}: Props) {
 
   const handleUpdateTool = (temporalId: string) => {
     const toolSelected = assignedTools.find(
-      (tool) => tool.temporalId === temporalId
+      (tool) => tool.temporalId === temporalId,
     );
 
     if (!toolSelected) {
@@ -139,6 +155,11 @@ function ModalTools({}: Props) {
                     min={1}
                     value={modalData.qty}
                     onChange={handleInputChange}
+                    onBlur={(e) => {
+                      if (e.target.value === "") {
+                        setModalData("qty", 0);
+                      }
+                    }}
                     style={{ textAlign: "center", fontWeight: "bold" }}
                   />
                 </FloatingLabel>

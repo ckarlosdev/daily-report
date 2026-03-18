@@ -32,7 +32,7 @@ function CardEquipment({}: Props) {
       totals.totalHours += hourDifference;
       return totals;
     },
-    { qty: 0, totalHours: 0 }
+    { qty: 0, totalHours: 0 },
   );
 
   const countsEquipments = assignedEquipments.reduce(
@@ -44,7 +44,7 @@ function CardEquipment({}: Props) {
       }
       return acc;
     },
-    { E: 0, A: 0 }
+    { E: 0, A: 0 },
   );
 
   const countRentals = assignedRentals.reduce(
@@ -56,12 +56,12 @@ function CardEquipment({}: Props) {
       }
       return acc;
     },
-    { E: 0, A: 0 }
+    { E: 0, A: 0 },
   );
 
   const equipmentTabTitle = ` E: ${countsEquipments.E + countRentals.E} - A: ${
     countsEquipments.A + countRentals.A
-  } - R: ${assignedRentals.length}`;
+  }`;
 
   return (
     <div>
@@ -105,11 +105,11 @@ function CardEquipment({}: Props) {
                       if (equipment.type === "Equipment") {
                         const employee = employees?.find(
                           (emp: Employee) =>
-                            emp.employeesId === equipment.employeesId
+                            emp.employeesId === equipment.employeesId,
                         );
 
                         const equip = equipmentData?.find(
-                          (eq) => eq.equipmentsId === equipment.equipmentsId
+                          (eq) => eq.equipmentsId === equipment.equipmentsId,
                         );
 
                         operador =
@@ -117,7 +117,7 @@ function CardEquipment({}: Props) {
                         number = equip?.number ?? "N/A";
                       } else {
                         const attach = attachmentsData?.find(
-                          (att) => att.attachmentsId === equipment.equipmentsId
+                          (att) => att.attachmentsId === equipment.equipmentsId,
                         );
                         number = attach?.number ?? "";
                       }
@@ -136,7 +136,7 @@ function CardEquipment({}: Props) {
                     {assignedRentals.map((rental) => {
                       const employee = employees?.find(
                         (emp: Employee) =>
-                          emp.employeesId === rental.employeesId
+                          emp.employeesId === rental.employeesId,
                       );
 
                       return (

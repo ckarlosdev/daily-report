@@ -14,7 +14,10 @@ function Tools({}: Props) {
     setShowModalTool(true);
   };
 
-  const totalTools = assignedTools.reduce((acc, tool) => acc + tool.qty, 0);
+  const totalTools = assignedTools.reduce(
+    (acc, tool) => acc + Number(tool.qty || 0),
+    0,
+  );
 
   return (
     <>

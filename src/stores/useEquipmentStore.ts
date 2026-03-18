@@ -8,11 +8,11 @@ type EquipmentStore = {
   attachmentsSelected: Attachment;
   showModalEquipment: boolean;
   showModalOdometer: boolean;
-  hourModal: number;
+  hourModal: number | string;
   operadorId: number;
   updateAssigned: boolean;
   equipmentsListCopied: DREquipment[];
-  setHourModal: (hour: number) => void;
+  setHourModal: (hour: number | string) => void;
   setOperatorId: (operatorNumber: number) => void;
   setUpdateAssigned: (update: boolean) => void;
   setShowModalEquipment: (show: boolean) => void;

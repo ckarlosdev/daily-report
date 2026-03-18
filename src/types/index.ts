@@ -101,7 +101,7 @@ export type DRTool = {
   temporalId: string;
   drToolId: number | null;
   dailyReportId: number | null;
-  qty: number;
+  qty: number | "";
   name: string;
   other: string;
   comments: string;
@@ -120,7 +120,7 @@ export type DrDumpster = {
   sourceDumpster: string;
   sizeDumpster: string;
   typeDumpster: String;
-  quantity: number;
+  quantity: number | 0;
 };
 
 export type DrResources = {
@@ -139,4 +139,10 @@ export type User = {
   id: number;
   fullName: string;
   email: string;
+  roles: Role[];
 };
+
+export type Role = {
+    id: number;
+    name: string;
+}
