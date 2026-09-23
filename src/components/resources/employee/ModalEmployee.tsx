@@ -10,6 +10,7 @@ import {
   Row,
 } from "react-bootstrap";
 import useAssignmentStore from "../../../stores/useManpowerStore";
+import type { DREmployee } from "../../../types";
 
 type Props = {
   show: boolean;
@@ -25,6 +26,7 @@ function ModalEmployee({ show, handleClose }: Props) {
     updateFormData,
     cleanFormData,
     updateAssignment,
+    assignedSelected,
   } = useAssignmentStore();
 
   const handleSaveAssignment = () => {
@@ -44,17 +46,15 @@ function ModalEmployee({ show, handleClose }: Props) {
 
       addAssignments(assignmentsPayload);
     } else {
-      const assignmentPayload = {
-        drEmployeesId: null,
-        dailyReportId: null,
-        employeesId: formData.employeesId,
+      const selectedIds = assignedSelected.map((a) => a.employeesId);
+      const commonChanges: Partial<DREmployee> = {
         inHour: formData.inHour,
         outHour: formData.outHour,
         lunch: formData.lunch,
         ppe: formData.ppe,
         comment: formData.comment,
       };
-      updateAssignment(assignmentPayload);
+      updateAssignment(commonChanges, selectedIds as number[]);
     }
 
     cleanFormData();

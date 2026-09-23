@@ -10,7 +10,7 @@ function Tools({}: Props) {
   const { setShowModalTool, assignedTools } = useToolStore();
 
   const handleShowTools = () => {
-    console.log("Show Tools Modal");
+    // console.log("Show Tools Modal");
     setShowModalTool(true);
   };
 

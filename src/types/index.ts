@@ -64,7 +64,7 @@ export type Job = {
   status: string;
 };
 
-export type DREmployee = {
+export interface DREmployee {
   drEmployeesId?: number | null;
   dailyReportId: number | null;
   employeesId: number | null;

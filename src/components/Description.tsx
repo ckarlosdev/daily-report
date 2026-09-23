@@ -7,14 +7,13 @@ type Props = {};
 function Description({}: Props) {
   const { data: employees } = useEmployees();
 
-  const { dailyReportData, setDailyReportData } =
-    useDailyReportStore();
+  const { dailyReportData, setDailyReportData } = useDailyReportStore();
 
   const supervisorOptions = employees?.filter(
-    (emp) => emp.title === "Supervisor"
+    (emp) => emp.title === "Supervisor",
   );
   const supervisorSorted = supervisorOptions?.sort((a, b) =>
-    a.firstName.localeCompare(b.firstName)
+    a.firstName.localeCompare(b.firstName),
   );
 
   return (
@@ -50,7 +49,7 @@ function Description({}: Props) {
               <Col>
                 <FloatingLabel
                   controlId="foreman"
-                  label="Forman"
+                  label="Foreman"
                   className="mb-3"
                 >
                   <Form.Select

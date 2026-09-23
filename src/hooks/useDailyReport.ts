@@ -46,31 +46,33 @@ const createDailyReport = async ({
   reportData: DailyReport;
   jobId: number;
 }) => {
+  const config = { timeout: 30000 };
+
   if (reportData.dailyReportId) {
-    return api.put(`v1/dailyReport`, reportData);
+    return api.put(`v1/dailyReport`, reportData, config);
   }
-  return api.post(`v1/dailyReport/${jobId}`, reportData);
+  return api.post(`v1/dailyReport/${jobId}`, reportData, config);
 };
 
 export function useSaveDailyReport() {
   const queryClient = useQueryClient();
-  // const setDailyReportData = useDailyReportStore(
-  //   (state) => state.setDailyReportData,
-  // );
   const jobId = useContextStore((s) => s.jobId);
-  
 
   return useMutation({
     mutationFn: createDailyReport,
-    onSuccess: (response) => {
+    onSuccess: async (response) => {
       const newId = response.data.dailyReportId;
-      // setDailyReportData("dailyReportId", newId);
-      queryClient.invalidateQueries({ queryKey: ["dailyReport", newId] });
-      alert("Data saved.");
+      await queryClient.invalidateQueries({ queryKey: ["dailyReport", newId] });
+      alert("Data saved successfully.");
       window.location.href = `https://ckarlosdev.github.io/binder-webapp/#/binder/${jobId}`;
     },
-    onError: () => {
-      alert("Error saving data.");
+    onError: (error) => {
+      console.error("Mutation Error:", error);
+      if (error.message === "Network Error") {
+        console.warn("Posible falso positivo por redirección");
+      } else {
+        alert("Error saving data.");
+      }
     },
   });
 }

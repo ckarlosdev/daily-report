@@ -58,6 +58,7 @@ function Title({ onPrint }: Props) {
             justifyContent: "center",
             gap: "10px",
           }}
+          className="no-print"
         >
           <div
             style={{

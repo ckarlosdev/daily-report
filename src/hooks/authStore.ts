@@ -22,10 +22,9 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: null,
 
   // token:
-  //   "eyJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOiJhM2EzYmI4NS04YzMzLTQ5OGYtYmI4Mi04NGI5YjA1MGExMWYiLCJlbWFpbCI6ImNyYW1pcmV6QGhtYnJhbmR0LmNvbSIsInN1YiI6ImEzYTNiYjg1LThjMzMtNDk4Zi1iYjgyLTg0YjliMDUwYTExZiIsImlhdCI6MTc3MDc0NTU5MSwiZXhwIjoxNzcwNzQ2NDkxfQ.t_pMde8BLqoWms4Lmen4zJJbYKioRd8nemJZ5E0fd3o",
-  // refreshToken: "9d71e9b7-909e-46cf-83b3-72bc2cf8ce89",
+  //   "eyJhbGciOiJIUzI1NiJ9.eyJyb2xlcyI6WyJST0xFX0FETUlOIl0sInN1YiI6ImNyYW1pcmV6QGhtYnJhbmR0LmNvbSIsImlhdCI6MTc3NTQ5Mzk3MiwiZXhwIjoxNzc1NDk0ODcyfQ.tlvi-rd4pKTZ7sHbbSV-3MIU12_H6tkozzFv9BOfGA4",
+  // refreshToken: "ec1c2dd2-f3f8-4f1f-933a-56712bb6a7d7.c7ac27f7-082c-43b4-8e47-84755c2fb3e8",
   // isAuthenticated: true,
-
 
   login: (token: string, refreshToken: string) => {
     localStorage.setItem("auth_token", token);

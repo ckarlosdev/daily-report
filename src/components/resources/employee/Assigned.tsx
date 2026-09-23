@@ -6,43 +6,59 @@ import useEmployees from "../../../hooks/useEmployees";
 type Props = { handleShowModal: () => void };
 
 function Assigned({ handleShowModal }: Props) {
-  const { assignedEmployees, removeEmployee, setFormData, addSelection } =
-    useAssignmentStore();
+  const {
+    assignedEmployees,
+    removeEmployee,
+    setFormData,
+    syncSelectedWithAssigned,
+    assignedSelected,
+    toggleAssigned,
+    setEditMode,
+  } = useAssignmentStore();
   const { data: employeesData } = useEmployees();
 
   const handleGetName = (employeeId: number) => {
     const employee = employeesData?.find(
-      (employee) => employee.employeesId === employeeId
+      (employee) => employee.employeesId === employeeId,
     );
     return employee?.firstName + " " + employee?.lastName;
   };
 
-  const handleUpdate = (employeeId: number) => {
+  const handleUpdate = (
+    e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
+    employeeId: number,
+  ) => {
+    e.stopPropagation();
+    setEditMode(true);
+
     const assignData = assignedEmployees.find(
-      (assinment) => assinment.employeesId === employeeId
+      (assignment) => assignment.employeesId === employeeId,
     );
 
     if (assignData) {
-      const employee = employeesData?.find(
-        (employee) => employee.employeesId === employeeId
+      const isAlreadyInBulk = assignedSelected.some(
+        (a) => a.employeesId === employeeId,
       );
 
-      if (employee) addSelection(employee);
+      if (!isAlreadyInBulk) {
+        toggleAssigned(assignData); // Lo marcamos si no estaba
+      }
 
-      const data = {
-        drEmployeesId: assignData?.drEmployeesId,
-        dailyReportId: assignData?.dailyReportId,
-        employeesId: employeeId,
-        inHour: assignData?.inHour,
-        outHour: assignData?.outHour,
-        lunch: assignData?.lunch,
-        ppe: assignData?.ppe,
-        comment: assignData?.comment,
-      };
-      setFormData(data);
+      if (employeesData) {
+        syncSelectedWithAssigned(employeesData);
+      }
+
+      setFormData({
+        ...assignData,
+        inHour: assignData.inHour?.slice(0, 5) || "07:00",
+        outHour: assignData.outHour?.slice(0, 5) || "17:30",
+      });
+
       handleShowModal();
     }
   };
+
+  // console.log("assignedEmployees: ", assignedEmployees);
 
   return (
     <>
@@ -83,7 +99,13 @@ function Assigned({ handleShowModal }: Props) {
                   {assignedEmployees.map((assignment) => (
                     <tr
                       key={assignment.employeesId}
-                      style={{ verticalAlign: "middle" }}
+                      style={{ verticalAlign: "middle", cursor: "pointer" }}
+                      className={
+                        assignedSelected.includes(assignment)
+                          ? "table-primary"
+                          : ""
+                      }
+                      onClick={() => toggleAssigned(assignment)}
                     >
                       <td>
                         <Button
@@ -108,7 +130,7 @@ function Assigned({ handleShowModal }: Props) {
                         {calculateHoursDifference(
                           assignment.inHour,
                           assignment.outHour,
-                          assignment.lunch
+                          assignment.lunch,
                         )}
                       </td>
                       <td>
@@ -138,7 +160,9 @@ function Assigned({ handleShowModal }: Props) {
                             fontWeight: "bold",
                             fontSize: "14px",
                           }}
-                          onClick={() => handleUpdate(assignment.employeesId!)}
+                          onClick={(e) =>
+                            handleUpdate(e, assignment.employeesId!)
+                          }
                         >
                           Update
                         </Button>

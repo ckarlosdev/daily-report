@@ -7,13 +7,13 @@ import useDailyReportStore from "../../stores/dailyReportStore";
 
 type Props = {};
 
-const timeToDecimalHours = (time: string) => {
-  if (!time || typeof time !== "string" || !time.includes(":")) {
-    return 0;
-  }
-  const [hours, minutes] = time.split(":").map(Number);
-  return hours + minutes / 60;
-};
+// const timeToDecimalHours = (time: string) => {
+//   if (!time || typeof time !== "string" || !time.includes(":")) {
+//     return 0;
+//   }
+//   const [hours, minutes] = time.split(":").map(Number);
+//   return hours + minutes / 60;
+// };
 
 function CardManpower({}: Props) {
   const navigate = useNavigate();
@@ -22,12 +22,44 @@ function CardManpower({}: Props) {
   const { data: employees } = useEmployees();
   const { dailyReportData, setDailyReportData } = useDailyReportStore();
 
+  // const manpowerTotals = assignedEmployees.reduce(
+  //   (totals, employee) => {
+  //     const inDecimal = timeToDecimalHours(employee.inHour);
+  //     const outDecimal = timeToDecimalHours(employee.outHour);
+  //     const hoursWorked = outDecimal - inDecimal - (employee.lunch ? 0.5 : 0);
+
+  //     totals.qty += 1;
+  //     totals.totalHours += Math.max(0, hoursWorked);
+
+  //     return totals;
+  //   },
+  //   { qty: 0, totalHours: 0 },
+  // );
+
   const manpowerTotals = assignedEmployees.reduce(
     (totals, employee) => {
-      const inDecimal = timeToDecimalHours(employee.inHour);
-      const outDecimal = timeToDecimalHours(employee.outHour);
-      const hoursWorked = outDecimal - inDecimal - (employee.lunch ? 0.5 : 0);
+      // 1. Convertimos horas a minutos para mayor precisión antes de restar
+      const timeToMinutes = (time: string) => {
+        const [h, m] = time.split(":").map(Number);
+        return h * 60 + m;
+      };
 
+      const minutesIn = timeToMinutes(employee.inHour);
+      let minutesOut = timeToMinutes(employee.outHour);
+
+      // 2. Manejo de cambio de día (si salió después de medianoche)
+      if (minutesOut < minutesIn) {
+        minutesOut += 1440; // Sumamos 24 horas en minutos
+      }
+
+      // 3. Calculamos la diferencia bruta en minutos
+      const diffMinutes = minutesOut - minutesIn;
+
+      // 4. Convertimos a horas y restamos el almuerzo
+      // (0.5 horas = 30 minutos)
+      const hoursWorked = diffMinutes / 60 - (employee.lunch ? 0.5 : 0);
+
+      // 5. Acumulamos (usamos Math.max solo por seguridad extrema de no tener horas negativas por el lunch)
       totals.qty += 1;
       totals.totalHours += Math.max(0, hoursWorked);
 
@@ -50,10 +82,21 @@ function CardManpower({}: Props) {
       const uniqueKey = `${role}-${inHour}-${outHour}`;
 
       if (!totals[uniqueKey]) {
-        const inDecimal = timeToDecimalHours(inHour);
-        const outDecimal = timeToDecimalHours(outHour);
-        const rawTotal = outDecimal - inDecimal;
-        const totalHours = Math.round(Math.max(0, rawTotal) * 100) / 100;
+        // 1. Convertimos a minutos para manejar mejor el cambio de día
+        const [inH, inM] = inHour.split(":").map(Number);
+        const [outH, outM] = outHour.split(":").map(Number);
+
+        let minutesIn = inH * 60 + inM;
+        let minutesOut = outH * 60 + outM;
+
+        // 2. Si la salida es menor a la entrada, sumamos un día (1440 min)
+        if (minutesOut < minutesIn) {
+          minutesOut += 1440;
+        }
+
+        // 3. Calculamos la diferencia y pasamos a decimal
+        const diffMinutes = minutesOut - minutesIn;
+        const totalHours = Math.round((diffMinutes / 60) * 100) / 100;
 
         totals[uniqueKey] = {
           qty: 0,

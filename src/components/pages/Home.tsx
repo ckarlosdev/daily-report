@@ -118,7 +118,7 @@ function Home() {
   }, [report]);
 
   const handleSave = () => {
-    if (!validateForeman) return;
+    if (!validateForeman()) return;
 
     const updatedReport = {
       ...dailyReportData, // Lo que ya teníamos (fecha, foreman, etc.)
@@ -170,7 +170,9 @@ function Home() {
 
   const isAuthorized = userAuth?.roles?.some(
     (role) =>
-      role.name === "ROLE_SUPERVISOR" || role.name === "ROLE_SUPERINTENDENT",
+      role.name === "ROLE_SUPERVISOR" ||
+      role.name === "ROLE_SUPERINTENDENT" ||
+      role.name === "ROLE_ADMIN",
   );
 
   return (

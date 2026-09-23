@@ -90,7 +90,7 @@ function ModalDumpsters({}: Props) {
               src="../src/assets/dumpster.png"
               alt="Dumpster Icon"
               className="me-2"
-              style={{ height:"50px" }}
+              style={{ height: "50px" }}
             />
             Dumpsters
           </Modal.Title>
@@ -146,7 +146,7 @@ function ModalDumpsters({}: Props) {
                                             setTableData(
                                               rowIndex,
                                               columnName,
-                                              e.target.value
+                                              e.target.value,
                                             )
                                           }
                                           style={{
@@ -157,7 +157,7 @@ function ModalDumpsters({}: Props) {
                                       </td>
                                     ))}
                                   </tr>
-                                )
+                                ),
                             )}
                           </tbody>
                         </Table>
@@ -213,7 +213,7 @@ function ModalDumpsters({}: Props) {
                                             setTableData(
                                               rowIndex,
                                               columnName,
-                                              e.target.value
+                                              e.target.value,
                                             )
                                           }
                                           style={{
@@ -224,7 +224,7 @@ function ModalDumpsters({}: Props) {
                                       </td>
                                     ))}
                                   </tr>
-                                )
+                                ),
                             )}
                           </tbody>
                           {/* Puedes calcular y mostrar el total aquí si es necesario */}

@@ -152,11 +152,28 @@ function ModalTools({}: Props) {
                   <Form.Control
                     type="number"
                     placeholder="Qty"
-                    min={1}
+                    min={0}
                     value={modalData.qty}
-                    onChange={handleInputChange}
+                    onChange={(e) => {
+                      const rawValue = e.target.value;
+
+                      if (rawValue === "") {
+                        setModalData("qty", "");
+                        return;
+                      }
+
+                      const parsedValue = parseInt(rawValue, 10);
+                      if (!isNaN(parsedValue) && parsedValue >= 0) {
+                        setModalData("qty", parsedValue);
+                      }
+                    }}
+                    // 1. Añadimos el evento onFocus para seleccionar todo el texto
+                    onFocus={(e) => e.target.select()}
                     onBlur={(e) => {
-                      if (e.target.value === "") {
+                      if (
+                        e.target.value === "" ||
+                        parseInt(e.target.value, 10) < 0
+                      ) {
                         setModalData("qty", 0);
                       }
                     }}
