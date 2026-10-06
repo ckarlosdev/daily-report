@@ -69,11 +69,12 @@ function Home() {
     const jobIdParam = searchParams.get("jobId");
     const dailyReportIdParam = searchParams.get("dailyReportId");
     const isNewAction = searchParams.get("action") === "new";
-    // console.log("Setting IDs from URL params:", {
-    //   jobId: jobIdParam,
-    //   dailyReportId: dailyReportIdParam,
-    //   isNewAction,
-    // });
+
+    console.log("Setting IDs from URL params:", {
+      jobId: jobIdParam,
+      dailyReportId: dailyReportIdParam,
+      isNewAction,
+    });
 
     const isDifferentJob = jobId && Number(jobIdParam) !== jobId;
 
@@ -92,7 +93,7 @@ function Home() {
         setIds(jId, dId);
       }
     }
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     if (report && !isLoaded) {
