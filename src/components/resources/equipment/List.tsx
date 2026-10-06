@@ -12,8 +12,7 @@ import useEquipments from "../../../hooks/useEquipments";
 import useAttachments from "../../../hooks/useAttachments";
 import useEquipmentStore from "../../../stores/useEquipmentStore";
 import ModalEquipment from "./ModalEquipment";
-import { useEffect, useState } from "react";
-import { Attachment, Equipment } from "../../../types";
+import { useMemo, useState } from "react";
 import ModalRental from "./ModalRental";
 import useRentalsStore from "../../../stores/useRentalsStore";
 
@@ -32,8 +31,6 @@ function List({}: Props) {
     isLoading: isAttachmentsLoading,
   } = useAttachments();
 
-  const [equipmentData, setEquipmentData] = useState<Equipment[]>([]);
-  const [attachmentData, setAttachmentData] = useState<Attachment[]>([]);
   const [searchValue, setSearchValue] = useState<string>("");
 
   const {
@@ -48,81 +45,78 @@ function List({}: Props) {
 
   const handleAddEquipment = (equipmentId: string) => {
     const equipSelected = equipments?.find(
-      (equipment) => equipment.number === equipmentId
+      (equipment) => equipment.number === equipmentId,
     );
 
-    setEquipmentSelected(equipSelected!);
-    setShowModalEquipment(true);
+    if (equipSelected) {
+      setEquipmentSelected(equipSelected);
+      setShowModalEquipment(true);
+    }
   };
 
   const handleAddRental = () => {
-    // const equipSelected = equipments?.find(
-    //   (equipment) => equipment.number === equipmentId
-    // );
-
-    // setEquipmentSelected(equipSelected!);
     setShowModalRental(true);
   };
 
   const handleAddAttachment = (attachmentId: string) => {
     const attachSelected = attachments?.find(
-      (attachment) => attachment.number === attachmentId
+      (attachment) => attachment.number === attachmentId,
     );
 
     setAttachmentSelected(attachSelected!);
     addAttachement();
   };
 
-  const assignedEquipmentsId = new Set(
-    assignedEquipments.map((equip) => equip.equipmentsId)
+  // 1. Set de IDs asignados
+  const assignedEquipmentsId = useMemo(
+    () => new Set(assignedEquipments.map((equip) => equip.equipmentsId)),
+    [assignedEquipments],
   );
 
-  const equipmentsList = equipments?.filter(
-    (equip) => !assignedEquipmentsId.has(equip.equipmentsId)
-  );
+  // 2. Filtrado derivado de Equipos (Sin useEffects)
+  const filteredEquipments = useMemo(() => {
+    if (!equipments) return [];
 
-  const equipmentsFiltered = (value: string) => {
-    if (!value) {
-      setEquipmentData(equipmentsList || []);
-      setAttachmentData(attachmentsList || []);
-      return true;
-    }
-    const search = value.toLowerCase();
+    const search = searchValue.trim().toLowerCase();
 
-    const data = equipmentsList?.filter((equip) => {
+    return equipments.filter((equip) => {
+      // 1. Debe ser de la familia "Equipment"
+      if (equip.family !== "Equipment") return false;
+
+      // 2. No debe estar ya asignado
+      if (assignedEquipmentsId.has(equip.equipmentsId)) return false;
+
+      // 3. Si no hay búsqueda, pasa el filtro
+      if (!search) return true;
+
+      // 4. Aplicar filtro de búsqueda
       return (
         equip.name.toLowerCase().includes(search) ||
         equip.number.toLowerCase().includes(search) ||
         equip.serialNumber.toLowerCase().includes(search)
       );
     });
-    setEquipmentData(data || []);
+  }, [equipments, assignedEquipmentsId, searchValue]);
 
-    const attachData = attachmentsList?.filter((attach) => {
-      return (
+  // 3. Filtrado derivado de Attachments (Sin useEffects)
+  const filteredAttachments = useMemo(() => {
+    if (!attachments) return [];
+
+    const available = attachments.filter(
+      (attach) => !assignedEquipmentsId.has(attach.attachmentsId),
+    );
+
+    if (!searchValue.trim()) return available;
+
+    const search = searchValue.toLowerCase();
+    return available.filter(
+      (attach) =>
         attach.name.toLowerCase().includes(search) ||
         attach.number.toLowerCase().includes(search) ||
         attach.serialNumber.toLowerCase().includes(search) ||
-        attach.family.toLowerCase().includes(search)
-      );
-    });
-    setAttachmentData(attachData || []);
-  };
-
-  const attachmentsList = attachments?.filter(
-    (attach) => !assignedEquipmentsId.has(attach.attachmentsId)
-  );
-
-  useEffect(() => {
-    setEquipmentData(equipmentsList || []);
-    setAttachmentData(attachmentsList || []);
-  }, [equipments, attachments]);
-
-  useEffect(() => {
-    setEquipmentData(equipmentsList || []);
-    setAttachmentData(attachmentsList || []);
-    setSearchValue("");
-  }, [assignedEquipments]);
+        attach.family.toLowerCase().includes(search),
+    );
+  }, [attachments, assignedEquipmentsId, searchValue]);
 
   return (
     <>
@@ -152,7 +146,7 @@ function List({}: Props) {
                 fontWeight: "bold",
               }}
             >
-              <h4>Selection</h4>
+              <h4 className="m-0">Selection</h4>
             </Col>
             <Col
               style={{
@@ -164,10 +158,7 @@ function List({}: Props) {
               <Form.Control
                 style={{ marginRight: "10px" }}
                 type="text"
-                onChange={(e) => {
-                  setSearchValue(e.target.value);
-                  equipmentsFiltered(e.target.value);
-                }}
+                onChange={(e) => setSearchValue(e.target.value)}
                 value={searchValue}
                 placeholder="Search..."
               />
@@ -215,7 +206,7 @@ function List({}: Props) {
                   )}
                   {!isEquipmentsLoading &&
                     !equipmentsError &&
-                    equipmentData?.map((equipment) => (
+                    filteredEquipments?.map((equipment) => (
                       <tr
                         key={equipment.equipmentsId + "E"}
                         style={{ verticalAlign: "middle" }}
@@ -274,7 +265,7 @@ function List({}: Props) {
 
                   {!isAttachmentsLoading &&
                     !attachmentsError &&
-                    attachmentData?.map((attachment) => (
+                    filteredAttachments?.map((attachment) => (
                       <tr
                         key={attachment.attachmentsId + "A"}
                         style={{ verticalAlign: "middle" }}
