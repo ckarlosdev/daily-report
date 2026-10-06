@@ -11,6 +11,7 @@ import {
 } from "react-bootstrap";
 import useDumpsterStore from "../../stores/useDumpsterStore";
 import { DrDumpster } from "../../types";
+import dumpsterIcon from "../../assets/dumpster.png";
 
 type Props = {};
 
@@ -87,7 +88,7 @@ function ModalDumpsters({}: Props) {
         <Modal.Header closeButton className="justify-content-center">
           <Modal.Title className="w-100 text-center">
             <img
-              src="../src/assets/dumpster.png"
+              src={dumpsterIcon}
               alt="Dumpster Icon"
               className="me-2"
               style={{ height: "50px" }}
@@ -126,39 +127,40 @@ function ModalDumpsters({}: Props) {
                             </tr>
                           </thead>
                           <tbody>
-                            {tableData.map(
-                              (row, rowIndex) =>
-                                row.type === "Disposal" && (
-                                  <tr key={row.size}>
-                                    <td style={{ fontWeight: "bold" }}>
-                                      {row.size}
+                            {tableData.map((row, index) => {
+                              if (row.type !== "Disposal") return null;
+
+                              return (
+                                <tr key={`disposal-${row.size}`}>
+                                  <td style={{ fontWeight: "bold" }}>
+                                    {row.size}
+                                  </td>
+                                  {editableColumns.map((columnName) => (
+                                    <td key={columnName}>
+                                      <input
+                                        type="number"
+                                        value={
+                                          row[columnName]
+                                            ? row[columnName].toString()
+                                            : "0"
+                                        }
+                                        onChange={(e) =>
+                                          setTableData(
+                                            index,
+                                            columnName,
+                                            e.target.value,
+                                          )
+                                        }
+                                        style={{
+                                          width: "60px",
+                                          textAlign: "center",
+                                        }}
+                                      />
                                     </td>
-                                    {editableColumns.map((columnName) => (
-                                      <td key={columnName}>
-                                        <input
-                                          type="number"
-                                          value={
-                                            row[columnName]
-                                              ? row[columnName].toString()
-                                              : "0"
-                                          }
-                                          onChange={(e) =>
-                                            setTableData(
-                                              rowIndex,
-                                              columnName,
-                                              e.target.value,
-                                            )
-                                          }
-                                          style={{
-                                            width: "60px",
-                                            textAlign: "center",
-                                          }}
-                                        />
-                                      </td>
-                                    ))}
-                                  </tr>
-                                ),
-                            )}
+                                  ))}
+                                </tr>
+                              );
+                            })}
                           </tbody>
                         </Table>
                         <Row>
@@ -193,42 +195,41 @@ function ModalDumpsters({}: Props) {
                             </tr>
                           </thead>
                           <tbody>
-                            {tableData.map(
-                              (row, rowIndex) =>
-                                row.type === "External" && (
-                                  <tr key={row.size}>
-                                    <td style={{ fontWeight: "bold" }}>
-                                      {row.size}
+                            {tableData.map((row, index) => {
+                              if (row.type !== "External") return null;
+
+                              return (
+                                <tr key={`external-${row.size}`}>
+                                  <td style={{ fontWeight: "bold" }}>
+                                    {row.size}
+                                  </td>
+                                  {editableColumns.map((columnName) => (
+                                    <td key={columnName}>
+                                      <input
+                                        type="number"
+                                        value={
+                                          row[columnName]
+                                            ? row[columnName].toString()
+                                            : "0"
+                                        }
+                                        onChange={(e) =>
+                                          setTableData(
+                                            index,
+                                            columnName,
+                                            e.target.value,
+                                          )
+                                        }
+                                        style={{
+                                          width: "60px",
+                                          textAlign: "center",
+                                        }}
+                                      />
                                     </td>
-                                    {editableColumns.map((columnName) => (
-                                      <td key={columnName}>
-                                        <input
-                                          type="number"
-                                          value={
-                                            row[columnName]
-                                              ? row[columnName].toString()
-                                              : "0"
-                                          }
-                                          onChange={(e) =>
-                                            setTableData(
-                                              rowIndex,
-                                              columnName,
-                                              e.target.value,
-                                            )
-                                          }
-                                          style={{
-                                            width: "60px",
-                                            textAlign: "center",
-                                          }}
-                                        />
-                                      </td>
-                                    ))}
-                                  </tr>
-                                ),
-                            )}
+                                  ))}
+                                </tr>
+                              );
+                            })}
                           </tbody>
-                          {/* Puedes calcular y mostrar el total aquí si es necesario */}
-                          {/* <tfoot>...</tfoot> */}
                         </Table>
                         <Row>
                           <Col className="text-end">

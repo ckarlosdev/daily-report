@@ -66,12 +66,12 @@ const useDumpsterStore = create<DumpstersStore>()(
         set(() => {
           const newTableData = initialData.map((row) => ({ ...row }));
 
-          apiData.forEach((item) => {
+          apiData?.forEach((item) => {
             const rowIndex = newTableData.findIndex(
               (row) =>
                 row.type === item.sourceDumpster &&
                 row.size.replace(/\s/g, "") ===
-                  item.sizeDumpster.replace(/\s/g, "")
+                  item.sizeDumpster.replace(/\s/g, ""),
             );
 
             if (rowIndex !== -1) {
@@ -83,14 +83,19 @@ const useDumpsterStore = create<DumpstersStore>()(
             }
           });
 
-          return { tableData: newTableData };
+          // CLAVE: Se actualizan tableData Y assignedDumpsters a la vez
+          return {
+            tableData: newTableData,
+            assignedDumpsters: apiData || [],
+          };
         }),
+
       reset: () => set({ tableData: initialData, assignedDumpsters: [] }),
     }),
     {
       name: "dumpsters-storage", // Nombre único en LocalStorage
-    }
-  )
+    },
+  ),
 );
 
 export default useDumpsterStore;
