@@ -127,7 +127,7 @@ function Home() {
       equipments: assignedEquipments,
       rentals: assignedRentals,
       tools: assignedTools,
-      dumpsters: assignedDumpsters, // Asegúrate de que aquí ya venga mapeado si es necesario
+      dumpsters: assignedDumpsters, 
     };
 
     // console.log("Updated Report to Save:", updatedReport);
