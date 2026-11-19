@@ -1,99 +1,136 @@
 import { create } from "zustand";
-import { DrDumpster } from "../types";
 import { persist } from "zustand/middleware";
+import { DrDumpster, DumpsterRow, DumpsterSource } from "../types";
+import {
+  BASE_MATERIALS,
+  MaterialResult,
+  buildEmptyTable,
+  buildPayload,
+  buildTableFromApi,
+  findRow,
+  isBaseMaterial,
+  normalizeMaterial,
+} from "../utils/dumpsters";
 
 type DumpstersStore = {
   assignedDumpsters: DrDumpster[];
   showModalDumpster: boolean;
-  tableData: any[];
+  materials: string[];
+  tableData: DumpsterRow[];
 
   setShowModalDumpster: (show: boolean) => void;
-  setTableData: (rowIndex: number, columnName: string, value: string) => void;
-  getApiPayload: (data: DrDumpster[]) => void;
+  setQuantity: (
+    source: DumpsterSource,
+    size: string,
+    material: string,
+    value: string,
+  ) => void;
+  addMaterial: (name: string) => MaterialResult;
+  removeMaterial: (material: string) => void;
   fillTableFromApi: (apiData: DrDumpster[]) => void;
   reset: () => void;
 };
 
-const initialData = [
-  { type: "Disposal", size: "40 yds", Concrete: 0, Metal: 0, "C&D": 0 },
-  { type: "Disposal", size: "35 yds", Concrete: 0, Metal: 0, "C&D": 0 },
-  { type: "Disposal", size: "30 yds", Concrete: 0, Metal: 0, "C&D": 0 },
-  { type: "Disposal", size: "20 yds", Concrete: 0, Metal: 0, "C&D": 0 },
-  { type: "Disposal", size: "12 yds", Concrete: 0, Metal: 0, "C&D": 0 },
-  { type: "Disposal", size: "Quad", Concrete: 0, Metal: 0, "C&D": 0 },
-  { type: "Disposal", size: "Semi", Concrete: 0, Metal: 0, "C&D": 0 },
-  { type: "Disposal", size: "Gondola", Concrete: 0, Metal: 0, "C&D": 0 },
-  { type: "External", size: "40 yds", Concrete: 0, Metal: 0, "C&D": 0 },
-  { type: "External", size: "35 yds", Concrete: 0, Metal: 0, "C&D": 0 },
-  { type: "External", size: "30 yds", Concrete: 0, Metal: 0, "C&D": 0 },
-  { type: "External", size: "20 yds", Concrete: 0, Metal: 0, "C&D": 0 },
-  { type: "External", size: "12 yds", Concrete: 0, Metal: 0, "C&D": 0 },
-  { type: "External", size: "Quad", Concrete: 0, Metal: 0, "C&D": 0 },
-  { type: "External", size: "Semi", Concrete: 0, Metal: 0, "C&D": 0 },
-  { type: "External", size: "Gondola", Concrete: 0, Metal: 0, "C&D": 0 },
-];
+// assignedDumpsters (lo que se guarda) siempre se recalcula desde la tabla
+const withPayload = (tableData: DumpsterRow[], materials: string[]) => ({
+  tableData,
+  materials,
+  assignedDumpsters: buildPayload(tableData, materials),
+});
 
 const useDumpsterStore = create<DumpstersStore>()(
   persist(
-    (set) => ({
-      assignedDumpsters: [],
+    (set, get) => ({
       showModalDumpster: false,
-      tableData: initialData,
+      ...withPayload(buildEmptyTable(), [...BASE_MATERIALS]),
 
       setShowModalDumpster: (show) => set({ showModalDumpster: show }),
-      setTableData: (rowIndex, columnName, value) =>
-        set((state) => {
-          const numericValue = parseInt(value, 10) || 0;
 
-          const updatedTableData = state.tableData.map((row, index) => {
-            if (index === rowIndex) {
-              return {
-                ...row,
-                [columnName]: numericValue,
-              };
-            }
-            return row;
-          });
-          return { tableData: updatedTableData };
+      setQuantity: (source, size, material, value) =>
+        set((state) => {
+          const parsed = parseInt(value, 10);
+          const quantity = Number.isNaN(parsed) || parsed < 0 ? 0 : parsed;
+
+          const tableData = state.tableData.map((row) =>
+            row.type === source && row.size === size
+              ? { ...row, values: { ...row.values, [material]: quantity } }
+              : row,
+          );
+          return withPayload(tableData, state.materials);
         }),
 
-      getApiPayload: (data) =>
-        set(() => ({
-          assignedDumpsters: data,
-        })),
+      addMaterial: (name) => {
+        const { materials, tableData } = get();
+        const result = normalizeMaterial(name, materials);
+        if (result.ok) {
+          set(withPayload(tableData, [...materials, result.name]));
+        }
+        return result;
+      },
+
+      removeMaterial: (material) =>
+        set((state) => {
+          if (isBaseMaterial(material)) return {};
+
+          // Se quitan valores e ids: al no mandarse, el backend hace soft delete
+          const tableData = state.tableData.map((row) => {
+            const values = { ...row.values };
+            const ids = { ...row.ids };
+            delete values[material];
+            delete ids[material];
+            return { ...row, values, ids };
+          });
+          const materials = state.materials.filter((m) => m !== material);
+          return withPayload(tableData, materials);
+        }),
 
       fillTableFromApi: (apiData) =>
         set(() => {
-          const newTableData = initialData.map((row) => ({ ...row }));
-
-          apiData?.forEach((item) => {
-            const rowIndex = newTableData.findIndex(
-              (row) =>
-                row.type === item.sourceDumpster &&
-                row.size.replace(/\s/g, "") ===
-                  item.sizeDumpster.replace(/\s/g, ""),
-            );
-
-            if (rowIndex !== -1) {
-              const columnName = item.typeDumpster as
-                | "Concrete"
-                | "Metal"
-                | "C&D";
-              newTableData[rowIndex][columnName] = item.quantity;
-            }
-          });
-
-          // CLAVE: Se actualizan tableData Y assignedDumpsters a la vez
-          return {
-            tableData: newTableData,
-            assignedDumpsters: apiData || [],
-          };
+          const { tableData, materials } = buildTableFromApi(apiData);
+          return withPayload(tableData, materials);
         }),
 
-      reset: () => set({ tableData: initialData, assignedDumpsters: [] }),
+      reset: () => set(withPayload(buildEmptyTable(), [...BASE_MATERIALS])),
     }),
     {
       name: "dumpsters-storage", // Nombre único en LocalStorage
+      version: 2,
+      // v1 guardaba las filas como { type, size, Concrete, Metal, "C&D" }
+      migrate: (persistedState, version) => {
+        const state = (persistedState ?? {}) as Record<string, unknown>;
+        if (version >= 2) return state as DumpstersStore;
+
+        const oldRows = (
+          Array.isArray(state.tableData) ? state.tableData : []
+        ) as Record<string, unknown>[];
+        const oldAssigned = (
+          Array.isArray(state.assignedDumpsters) ? state.assignedDumpsters : []
+        ) as DrDumpster[];
+
+        const tableData = buildEmptyTable();
+        oldRows.forEach((old) => {
+          const row = findRow(tableData, String(old?.type), String(old?.size));
+          if (!row) return;
+          BASE_MATERIALS.forEach((material) => {
+            const qty = Number(old[material]) || 0;
+            if (qty > 0) row.values[material] = qty;
+          });
+        });
+
+        // Se conservan los ids que hubiera para hacer UPDATE en lugar de INSERT
+        oldAssigned.forEach((item) => {
+          if (item?.drDumpstersId == null) return;
+          const row = findRow(tableData, item.sourceDumpster, item.sizeDumpster);
+          if (row && BASE_MATERIALS.includes(item.typeDumpster)) {
+            row.ids[item.typeDumpster] = item.drDumpstersId;
+          }
+        });
+
+        return {
+          ...state,
+          ...withPayload(tableData, [...BASE_MATERIALS]),
+        } as DumpstersStore;
+      },
     },
   ),
 );

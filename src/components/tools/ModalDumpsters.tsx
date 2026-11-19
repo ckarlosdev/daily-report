@@ -1,16 +1,27 @@
+import { FormEvent, useState } from "react";
 import {
+  Badge,
   Button,
   Card,
+  CloseButton,
   Col,
-  Container,
+  Form,
+  InputGroup,
+  ListGroup,
   Modal,
   Row,
-  Tab,
   Table,
-  Tabs,
 } from "react-bootstrap";
 import useDumpsterStore from "../../stores/useDumpsterStore";
-import { DrDumpster } from "../../types";
+import { DumpsterRow } from "../../types";
+import {
+  MATERIAL_MAX_LENGTH,
+  MATERIAL_SUGGESTIONS,
+  SOURCES,
+  SOURCE_LABELS,
+  calculateTotals,
+  isBaseMaterial,
+} from "../../utils/dumpsters";
 import dumpsterIcon from "../../assets/dumpster.png";
 
 type Props = {};
@@ -20,63 +31,58 @@ function ModalDumpsters({}: Props) {
     showModalDumpster,
     setShowModalDumpster,
     tableData,
-    setTableData,
-    getApiPayload,
+    materials,
+    setQuantity,
+    addMaterial,
+    removeMaterial,
   } = useDumpsterStore();
 
-  const editableColumns = ["Concrete", "Metal", "C&D"];
+  const [selectedMaterial, setSelectedMaterial] = useState(materials[0]);
+  const [newMaterial, setNewMaterial] = useState("");
+  const [error, setError] = useState("");
 
-  const calculateSubtotalsClean = () => {
-    return tableData.reduce((acc, row) => {
-      const { type, Concrete, Metal, "C&D": CD } = row;
+  // Si el material seleccionado ya no existe (se quitó o se cargó otro reporte)
+  const activeMaterial = materials.includes(selectedMaterial)
+    ? selectedMaterial
+    : materials[0];
 
-      if (!acc[type]) {
-        acc[type] = { Concrete: 0, Metal: 0, "C&D": 0 };
-      }
+  const { byMaterial, grandTotal } = calculateTotals(tableData, materials);
+  const activeTotals = byMaterial[activeMaterial];
 
-      acc[type].Concrete += Concrete;
-      acc[type].Metal += Metal;
-      acc[type]["C&D"] += CD;
+  // Tamaños en el orden de la tabla (incluye tamaños extra que vengan de BD)
+  const sizes = Array.from(new Set(tableData.map((row) => row.size)));
+  const rowsByKey = new Map<string, DumpsterRow>(
+    tableData.map((row) => [`${row.type}|${row.size}`, row]),
+  );
 
-      return acc;
-    }, {});
+  const suggestions = MATERIAL_SUGGESTIONS.filter(
+    (s) => !materials.some((m) => m.toLowerCase() === s.toLowerCase()),
+  );
+
+  const handleAddMaterial = (e: FormEvent) => {
+    e.preventDefault();
+    const result = addMaterial(newMaterial);
+    if (result.ok) {
+      setSelectedMaterial(result.name);
+      setNewMaterial("");
+      setError("");
+    } else {
+      if (result.existing) setSelectedMaterial(result.existing);
+      setError(result.error);
+    }
   };
 
-  const totalDisposal = calculateSubtotalsClean().Disposal || {
-    Concrete: 0,
-    Metal: 0,
-    "C&D": 0,
-  };
-  const totalExternal = calculateSubtotalsClean().External || {
-    Concrete: 0,
-    Metal: 0,
-    "C&D": 0,
-  };
-
-  const totalConcrete = totalDisposal.Concrete + totalExternal.Concrete;
-  const totalMetal = totalDisposal.Metal + totalExternal.Metal;
-  const totalCD = totalDisposal["C&D"] + totalExternal["C&D"];
-
-  const handleApiPayload = (): void => {
-    const payload: DrDumpster[] = [];
-
-    tableData.forEach((row) => {
-      ["Concrete", "Metal", "C&D"].forEach((col) => {
-        // Usamos 'as keyof typeof row' para que TS sepa que 'col' es una llave válida
-        const value = row[col as keyof typeof row];
-
-        if (typeof value === "number" && value > 0) {
-          payload.push({
-            sourceDumpster: row.type,
-            sizeDumpster: row.size,
-            typeDumpster: col,
-            quantity: value,
-            drDumpstersId: null,
-          });
-        }
-      });
-    });
-    getApiPayload(payload);
+  const handleRemoveMaterial = (material: string) => {
+    const total = byMaterial[material]?.total ?? 0;
+    if (
+      total > 0 &&
+      !window.confirm(
+        `Remove "${material}"? Its ${total} dumpster(s) will be deleted from this report.`,
+      )
+    ) {
+      return;
+    }
+    removeMaterial(material);
   };
 
   return (
@@ -84,6 +90,7 @@ function ModalDumpsters({}: Props) {
       <Modal
         show={showModalDumpster}
         onHide={() => setShowModalDumpster(false)}
+        size="lg"
       >
         <Modal.Header closeButton className="justify-content-center">
           <Modal.Title className="w-100 text-center">
@@ -97,205 +104,194 @@ function ModalDumpsters({}: Props) {
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Container>
-            <Row>
-              <Col>
-                <Card style={{ marginBottom: "2px" }}>
-                  <Card.Body>
-                    <Tabs
-                      defaultActiveKey="creativeDisposal"
-                      id="uncontrolled-tab-example"
-                      className="mb-3"
-                      justify
-                    >
-                      <Tab
-                        eventKey="creativeDisposal"
-                        title="Creative Disposal"
+          <Row className="g-3">
+            {/* Lista de materiales */}
+            <Col md={4}>
+              <Card className="h-100">
+                <Card.Header className="fw-bold text-center">
+                  Materials
+                </Card.Header>
+                <ListGroup
+                  variant="flush"
+                  style={{ maxHeight: "330px", overflowY: "auto" }}
+                >
+                  {materials.map((material) => {
+                    const isActive = material === activeMaterial;
+                    const total = byMaterial[material]?.total ?? 0;
+                    return (
+                      <ListGroup.Item
+                        key={material}
+                        as="div"
+                        action
+                        active={isActive}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => setSelectedMaterial(material)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            setSelectedMaterial(material);
+                          }
+                        }}
+                        className="d-flex justify-content-between align-items-center gap-2"
                       >
-                        <Table
-                          striped
-                          bordered
-                          hover
-                          style={{ textAlign: "center" }}
-                        >
-                          <thead>
-                            <tr>
-                              <th></th>
-                              {editableColumns.map((header) => (
-                                <th key={header}>{header}</th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {tableData.map((row, index) => {
-                              if (row.type !== "Disposal") return null;
+                        <span className="text-truncate" title={material}>
+                          {material}
+                        </span>
+                        <span className="d-flex align-items-center gap-2">
+                          <Badge
+                            pill
+                            bg={isActive ? "light" : total > 0 ? "primary" : "secondary"}
+                            text={isActive ? "dark" : undefined}
+                          >
+                            {total}
+                          </Badge>
+                          {!isBaseMaterial(material) && (
+                            <CloseButton
+                              variant={isActive ? "white" : undefined}
+                              aria-label={`Remove ${material}`}
+                              style={{ fontSize: "0.7rem" }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRemoveMaterial(material);
+                              }}
+                            />
+                          )}
+                        </span>
+                      </ListGroup.Item>
+                    );
+                  })}
+                </ListGroup>
+                <Card.Footer>
+                  <Form onSubmit={handleAddMaterial}>
+                    <InputGroup size="sm" hasValidation>
+                      <Form.Control
+                        list="dumpster-material-suggestions"
+                        placeholder="Add material"
+                        value={newMaterial}
+                        maxLength={MATERIAL_MAX_LENGTH}
+                        isInvalid={!!error}
+                        onChange={(e) => {
+                          setNewMaterial(e.target.value);
+                          if (error) setError("");
+                        }}
+                      />
+                      <Button
+                        type="submit"
+                        variant="outline-primary"
+                        style={{ fontWeight: "bold" }}
+                      >
+                        +
+                      </Button>
+                      <Form.Control.Feedback type="invalid">
+                        {error}
+                      </Form.Control.Feedback>
+                    </InputGroup>
+                    <datalist id="dumpster-material-suggestions">
+                      {suggestions.map((s) => (
+                        <option key={s} value={s} />
+                      ))}
+                    </datalist>
+                  </Form>
+                </Card.Footer>
+              </Card>
+            </Col>
 
+            {/* Captura del material seleccionado */}
+            <Col md={8}>
+              <Card className="h-100">
+                <Card.Header className="fw-bold text-center">
+                  {activeMaterial}
+                </Card.Header>
+                <Card.Body className="p-2">
+                  <Table
+                    striped
+                    bordered
+                    hover
+                    size="sm"
+                    className="text-center align-middle mb-0"
+                  >
+                    <thead>
+                      <tr>
+                        <th>Size</th>
+                        {SOURCES.map((source) => (
+                          <th key={source}>{SOURCE_LABELS[source]}</th>
+                        ))}
+                        <th>Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sizes.map((size) => {
+                        let rowTotal = 0;
+                        return (
+                          <tr key={size}>
+                            <td style={{ fontWeight: "bold" }}>{size}</td>
+                            {SOURCES.map((source) => {
+                              const row = rowsByKey.get(`${source}|${size}`);
+                              if (!row) return <td key={source}>—</td>;
+                              const qty = row.values[activeMaterial] ?? 0;
+                              rowTotal += qty;
                               return (
-                                <tr key={`disposal-${row.size}`}>
-                                  <td style={{ fontWeight: "bold" }}>
-                                    {row.size}
-                                  </td>
-                                  {editableColumns.map((columnName) => (
-                                    <td key={columnName}>
-                                      <input
-                                        type="number"
-                                        value={
-                                          row[columnName]
-                                            ? row[columnName].toString()
-                                            : "0"
-                                        }
-                                        onChange={(e) =>
-                                          setTableData(
-                                            index,
-                                            columnName,
-                                            e.target.value,
-                                          )
-                                        }
-                                        style={{
-                                          width: "60px",
-                                          textAlign: "center",
-                                        }}
-                                      />
-                                    </td>
-                                  ))}
-                                </tr>
+                                <td key={source}>
+                                  <input
+                                    type="number"
+                                    min={0}
+                                    value={qty.toString()}
+                                    aria-label={`${activeMaterial} ${SOURCE_LABELS[source]} ${size}`}
+                                    onFocus={(e) => e.target.select()}
+                                    onChange={(e) =>
+                                      setQuantity(
+                                        source,
+                                        row.size,
+                                        activeMaterial,
+                                        e.target.value,
+                                      )
+                                    }
+                                    style={{
+                                      width: "70px",
+                                      textAlign: "center",
+                                    }}
+                                  />
+                                </td>
                               );
                             })}
-                          </tbody>
-                        </Table>
-                        <Row>
-                          <Col className="text-end">
-                            <span className="me-2">Subtotals:</span>
-                          </Col>
-                          <Col>
-                            Concrete:{" "}
-                            {calculateSubtotalsClean().Disposal.Concrete}
-                          </Col>
-                          <Col>
-                            Metal: {calculateSubtotalsClean().Disposal.Metal}
-                          </Col>
-                          <Col>
-                            C&D: {calculateSubtotalsClean().Disposal["C&D"]}
-                          </Col>
-                        </Row>
-                      </Tab>
-                      <Tab eventKey="external" title="External">
-                        <Table
-                          striped
-                          bordered
-                          hover
-                          style={{ textAlign: "center" }}
-                        >
-                          <thead>
-                            <tr>
-                              <th></th>
-                              {editableColumns.map((header) => (
-                                <th key={header}>{header}</th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {tableData.map((row, index) => {
-                              if (row.type !== "External") return null;
+                            <td className="fw-bold">{rowTotal}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                    <tfoot>
+                      <tr className="fw-bold">
+                        <td>Total</td>
+                        {SOURCES.map((source) => (
+                          <td key={source}>{activeTotals?.[source] ?? 0}</td>
+                        ))}
+                        <td>{activeTotals?.total ?? 0}</td>
+                      </tr>
+                    </tfoot>
+                  </Table>
+                </Card.Body>
+              </Card>
+            </Col>
+          </Row>
 
-                              return (
-                                <tr key={`external-${row.size}`}>
-                                  <td style={{ fontWeight: "bold" }}>
-                                    {row.size}
-                                  </td>
-                                  {editableColumns.map((columnName) => (
-                                    <td key={columnName}>
-                                      <input
-                                        type="number"
-                                        value={
-                                          row[columnName]
-                                            ? row[columnName].toString()
-                                            : "0"
-                                        }
-                                        onChange={(e) =>
-                                          setTableData(
-                                            index,
-                                            columnName,
-                                            e.target.value,
-                                          )
-                                        }
-                                        style={{
-                                          width: "60px",
-                                          textAlign: "center",
-                                        }}
-                                      />
-                                    </td>
-                                  ))}
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </Table>
-                        <Row>
-                          <Col className="text-end">
-                            <span className="me-2">Subtotals:</span>
-                          </Col>
-                          <Col>
-                            Concrete:{" "}
-                            {calculateSubtotalsClean().External.Concrete}
-                          </Col>
-                          <Col>
-                            Metal: {calculateSubtotalsClean().External.Metal}
-                          </Col>
-                          <Col>
-                            C&D: {calculateSubtotalsClean().External["C&D"]}
-                          </Col>
-                        </Row>
-                      </Tab>
-                    </Tabs>
-                  </Card.Body>
-                </Card>
-              </Col>
-              <Col>
-                <Row>
-                  <Col>
-                    <Card>
-                      <Card.Body>
-                        <Card.Title className="text-center mb-3">
-                          Totals
-                        </Card.Title>
-                        <Row className="fw-bold border-top pt-2">
-                          <Col className="text-center">
-                            <span className="me-2">Concrete:</span>
-                            <span style={{ minWidth: "40px" }}>
-                              {" "}
-                              {totalConcrete.toLocaleString()}
-                            </span>
-                          </Col>
-                          <Col className="text-center">
-                            <span className="me-2">Metal:</span>
-                            <span style={{ minWidth: "40px" }}>
-                              {totalMetal.toLocaleString()}
-                            </span>
-                          </Col>
-                          <Col className="text-center">
-                            <span className="me-2">C&D:</span>
-                            <span style={{ minWidth: "40px" }}>
-                              {totalCD.toLocaleString()}
-                            </span>
-                          </Col>
-                        </Row>
-                      </Card.Body>
-                    </Card>
-                  </Col>
-                </Row>
-              </Col>
-            </Row>
-          </Container>
+          {/* Resumen de todos los materiales */}
+          <div className="d-flex flex-wrap justify-content-center align-items-center gap-2 mt-3 pt-2 border-top">
+            {materials
+              .filter((m) => (byMaterial[m]?.total ?? 0) > 0)
+              .map((m) => (
+                <Badge key={m} bg="light" text="dark" className="border fs-6">
+                  {m}: {byMaterial[m].total}
+                </Badge>
+              ))}
+            <span className="fw-bold ms-2">Total: {grandTotal}</span>
+          </div>
         </Modal.Body>
         <Modal.Footer className="justify-content-center">
           <Button
             variant="primary"
             style={{ fontWeight: "bold", fontSize: "20px", width: "150px" }}
-            onClick={() => {
-              setShowModalDumpster(false);
-              handleApiPayload();
-            }}
+            onClick={() => setShowModalDumpster(false)}
           >
             Ok
           </Button>

@@ -107,20 +107,22 @@ export type DRTool = {
   comments: string;
 };
 
-export type DumpsterTable = {
-  type: string;
+export type DumpsterSource = "Disposal" | "External";
+
+// Una fila por fuente + tamaño. Las llaves de values/ids son los materiales.
+export type DumpsterRow = {
+  type: DumpsterSource;
   size: string;
-  concrete: number;
-  metal: number;
-  cd: number;
+  values: Record<string, number>;
+  ids: Record<string, number>; // drDumpstersId de los registros que vienen de BD
 };
 
 export type DrDumpster = {
   drDumpstersId: number | null;
   sourceDumpster: string;
   sizeDumpster: string;
-  typeDumpster: String;
-  quantity: number | 0;
+  typeDumpster: string;
+  quantity: number;
 };
 
 export type DrResources = {

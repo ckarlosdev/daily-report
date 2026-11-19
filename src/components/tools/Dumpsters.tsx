@@ -1,46 +1,35 @@
-// import React from "react";
-import { Button, Card, Col, Row } from "react-bootstrap";
+import {
+  Button,
+  Card,
+  Col,
+  OverlayTrigger,
+  Row,
+  Tooltip,
+} from "react-bootstrap";
 import Donut from "./Donut";
 import CardTotal from "./CardTotal";
 import useDumpsterStore from "../../stores/useDumpsterStore";
+import {
+  BASE_MATERIALS,
+  calculateTotals,
+  isBaseMaterial,
+} from "../../utils/dumpsters";
 
 type Props = {};
 
 function Dumpsters({}: Props) {
-  const { setShowModalDumpster, tableData } = useDumpsterStore();
+  const { setShowModalDumpster, tableData, materials } = useDumpsterStore();
 
-  const calculateSubtotalsClean = () => {
-    return tableData.reduce((acc, row) => {
-      const { type, Concrete, Metal, "C&D": CD } = row;
+  const { byMaterial, grandTotal } = calculateTotals(tableData, materials);
 
-      if (!acc[type]) {
-        acc[type] = { Concrete: 0, Metal: 0, "C&D": 0 };
-      }
+  // Todo lo que no es Concrete / Metal / C&D se agrupa en Others
+  const others = materials
+    .filter((m) => !isBaseMaterial(m))
+    .map((m) => ({ material: m, total: byMaterial[m]?.total ?? 0 }))
+    .filter((o) => o.total > 0);
+  const othersTotal = others.reduce((acc, o) => acc + o.total, 0);
 
-      acc[type].Concrete += Concrete;
-      acc[type].Metal += Metal;
-      acc[type]["C&D"] += CD;
-
-      return acc;
-    }, {});
-  };
-
-  const totalDisposal = calculateSubtotalsClean().Disposal || {
-    Concrete: 0,
-    Metal: 0,
-    "C&D": 0,
-  };
-  const totalExternal = calculateSubtotalsClean().External || {
-    Concrete: 0,
-    Metal: 0,
-    "C&D": 0,
-  };
-
-  const totalConcrete = totalDisposal.Concrete + totalExternal.Concrete;
-  const totalMetal = totalDisposal.Metal + totalExternal.Metal;
-  const totalCD = totalDisposal["C&D"] + totalExternal["C&D"];
-
-  const totalAll = totalConcrete + totalMetal + totalCD;
+  const othersCard = <CardTotal qty={othersTotal} label="Others" />;
 
   return (
     <>
@@ -63,22 +52,43 @@ function Dumpsters({}: Props) {
                     border: "2px solid lightgray",
                     borderRadius: "7px",
                     display: "grid",
-                    gridTemplateColumns: "auto auto auto",
-                    // gridTemplateRows: "auto auto",
+                    gridTemplateColumns: "auto auto",
                     height: "218px",
-                    alignItems: "center",
+                    alignContent: "center",
                     justifyContent: "center",
                     gap: "10px",
                     minWidth: "300px",
                   }}
                 >
-                  <CardTotal qty={totalConcrete} label="Concrete" />
-                  <CardTotal qty={totalMetal} label="Metal" />
-                  <CardTotal qty={totalCD} label="C&D" />
+                  {BASE_MATERIALS.map((material) => (
+                    <CardTotal
+                      key={material}
+                      qty={byMaterial[material]?.total ?? 0}
+                      label={material}
+                    />
+                  ))}
+                  {others.length > 0 ? (
+                    <OverlayTrigger
+                      placement="top"
+                      overlay={
+                        <Tooltip id="dumpsters-others-tooltip">
+                          {others.map((o) => (
+                            <div key={o.material}>
+                              {o.material}: {o.total}
+                            </div>
+                          ))}
+                        </Tooltip>
+                      }
+                    >
+                      <div style={{ cursor: "help" }}>{othersCard}</div>
+                    </OverlayTrigger>
+                  ) : (
+                    othersCard
+                  )}
                 </div>
               </Col>
               <Col>
-                <Donut value={totalAll} />
+                <Donut value={grandTotal} />
               </Col>
             </Row>
           </Card.Body>
